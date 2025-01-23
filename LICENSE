@@ -1,20 +1,170 @@
-Copyright (c) GitHub and others
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Device Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .status {
+            margin-bottom: 10px;
+        }
+        .buttons, .axes, .mouse-events {
+            margin-top: 20px;
+        }
+        .button, .axis, .mouse-event {
+            margin: 5px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            display: inline-block;
+            width: 120px;
+            text-align: center;
+        }
+        #mouse-position {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Input Device Tester</h1>
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+    <!-- Gamepad Section -->
+    <div class="section">
+        <h2>Gamepad Tester</h2>
+        <div class="status">
+            <p>连接状态: <span id="gamepad-status">未连接</span></p >
+        </div>
+        <div class="buttons">
+            <h3>按钮</h3>
+            <div id="gamepad-buttons-container"></div>
+        </div>
+        <div class="axes">
+            <h3>摇杆</h3>
+            <div id="gamepad-axes-container"></div>
+        </div>
+    </div>
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+    <!-- Mouse Section -->
+    <div class="section">
+        <h2>Mouse Tester</h2>
+        <div class="mouse-events">
+            <h3>鼠标事件</h3>
+            <div id="mouse-events-container">
+                <div class="mouse-event" id="mouse-left-click">左键: 未按下</div>
+                <div class="mouse-event" id="mouse-right-click">右键: 未按下</div>
+                <div class="mouse-event" id="mouse-middle-click">中键: 未按下</div>
+            </div>
+            <div id="mouse-position">
+                鼠标位置: (X: <span id="mouse-x">0</span>, Y: <span id="mouse-y">0</span>)
+            </div>
+        </div>
+    </div>
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    <script>
+        // 初始化手柄按钮和摇杆显示
+        function initGamepadDisplay(gamepad) {
+            const buttonsContainer = document.getElementById('gamepad-buttons-container');
+            const axesContainer = document.getElementById('gamepad-axes-container');
+
+            buttonsContainer.innerHTML = '';
+            axesContainer.innerHTML = '';
+
+            for (let i = 0; i < gamepad.buttons.length; i++) {
+                const buttonDiv = document.createElement('div');
+                buttonDiv.className = 'button';
+                buttonDiv.id = `gamepad-button-${i}`;
+                buttonDiv.innerText = `按钮 ${i}`;
+                buttonsContainer.appendChild(buttonDiv);
+            }
+
+            for (let i = 0; i < gamepad.axes.length; i++) {
+                const axisDiv = document.createElement('div');
+                axisDiv.className = 'axis';
+                axisDiv.id = `gamepad-axis-${i}`;
+                axisDiv.innerText = `摇杆 ${i}`;
+                axesContainer.appendChild(axisDiv);
+            }
+        }
+
+        // 更新手柄按钮和摇杆状态
+        function updateGamepadDisplay(gamepad) {
+            for (let i = 0; i < gamepad.buttons.length; i++) {
+                const buttonDiv = document.getElementById(`gamepad-button-${i}`);
+                buttonDiv.style.backgroundColor = gamepad.buttons[i].pressed ? '#a0ffa0' : '#f0f0f0';
+            }
+
+            for (let i = 0; i < gamepad.axes.length; i++) {
+                const axisDiv = document.getElementById(`gamepad-axis-${i}`);
+                axisDiv.innerText = `摇杆 ${i}: ${gamepad.axes[i].toFixed(2)}`;
+            }
+        }
+
+        // 主循环（手柄）
+        function gamepadLoop() {
+            const gamepads = navigator.getGamepads();
+            const gamepad = gamepads[0];
+
+            if (gamepad) {
+                document.getElementById('gamepad-status').innerText = '已连接';
+                updateGamepadDisplay(gamepad);
+            } else {
+                document.getElementById('gamepad-status').innerText = '未连接';
+            }
+
+            requestAnimationFrame(gamepadLoop);
+        }
+
+        // 监听手柄连接事件
+        window.addEventListener('gamepadconnected', (event) => {
+            console.log('Gamepad connected:', event.gamepad);
+            initGamepadDisplay(event.gamepad);
+            gamepadLoop();
+        });
+
+        // 监听手柄断开事件
+        window.addEventListener('gamepaddisconnected', (event) => {
+            console.log('Gamepad disconnected:', event.gamepad);
+            document.getElementById('gamepad-status').innerText = '未连接';
+        });
+
+        // 鼠标事件监听
+        const mouseLeftClick = document.getElementById('mouse-left-click');
+        const mouseRightClick = document.getElementById('mouse-right-click');
+        const mouseMiddleClick = document.getElementById('mouse-middle-click');
+        const mouseX = document.getElementById('mouse-x');
+        const mouseY = document.getElementById('mouse-y');
+
+        window.addEventListener('mousedown', (event) => {
+            if (event.button === 0) {
+                mouseLeftClick.innerText = '左键: 按下';
+            } else if (event.button === 1) {
+                mouseMiddleClick.innerText = '中键: 按下';
+            } else if (event.button === 2) {
+                mouseRightClick.innerText = '右键: 按下';
+            }
+        });
+
+        window.addEventListener('mouseup', (event) => {
+            if (event.button === 0) {
+                mouseLeftClick.innerText = '左键: 未按下';
+            } else if (event.button === 1) {
+                mouseMiddleClick.innerText = '中键: 未按下';
+            } else if (event.button === 2) {
+                mouseRightClick.innerText = '右键: 未按下';
+            }
+        });
+
+        window.addEventListener('mousemove', (event) => {
+            mouseX.innerText = event.clientX;
+            mouseY.innerText = event.clientY;
+        });
+    </script>
+</body>
+</html>
